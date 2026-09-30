@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demystifying Agentic AI</title>
+<meta name="description" content="The agentic AI stack, taken apart through a security lens: harnesses, the agent loop, subagents, skills, hooks, MCP, memory, plugins and sandboxing, and where the trust boundaries sit between them.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Demystifying Agentic AI">
+<meta property="og:description" content="The agentic AI stack, taken apart through a security lens: harnesses, the agent loop, subagents, skills, hooks, MCP, memory, plugins and sandboxing, and where the trust boundaries sit between them.">
+<meta property="og:url" content="https://hyggehacker.github.io/talks-public/demystifying-agentic/">
+<meta property="og:image" content="https://hyggehacker.github.io/talks-public/demystifying-agentic/og.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preload" as="image" href="slides/01.webp">
+<style>
+:root { --bg: #111214; --panel: #1b1d21; --line: #2c2f35; --fg: #e8e8ea; --dim: #9a9ca3; --accent: #e8743b; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+a { color: var(--fg); }
+a:hover { color: var(--accent); }
+
+body { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+header { display: flex; align-items: center; gap: 16px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+header .t { flex: 1; min-width: 0; }
+header h1 { font-size: 16px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+header .m { color: var(--dim); font-size: 13px; }
+header nav { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+.btn { background: var(--panel); border: 1px solid var(--line); color: var(--fg); border-radius: 6px; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; text-decoration: none; }
+.btn:hover { border-color: var(--accent); color: var(--fg); }
+.count { color: var(--dim); font-size: 13px; font-variant-numeric: tabular-nums; min-width: 4.5em; text-align: right; }
+main { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 16px; position: relative; touch-action: pan-y; }
+main #slide { width: auto; height: auto; max-width: 100%; max-height: 100%; box-shadow: 0 6px 30px rgba(0,0,0,.5); user-select: none; -webkit-user-drag: none; }
+main .zone { position: absolute; top: 0; bottom: 0; width: 30%; cursor: pointer; }
+main .prev { left: 0; } main .next { right: 0; }
+.strip { display: flex; gap: 8px; overflow-x: auto; padding: 10px 16px; border-top: 1px solid var(--line); scrollbar-width: thin; }
+.strip button { flex: 0 0 auto; padding: 0; border: 2px solid transparent; border-radius: 4px; background: none; cursor: pointer; opacity: .55; }
+.strip button[aria-current="true"] { border-color: var(--accent); opacity: 1; }
+.strip button:hover { opacity: 1; }
+.strip img { display: block; width: 112px; aspect-ratio: 16 / 9; border-radius: 2px; background: var(--panel); }
+.all { overflow-y: auto; padding: 16px; display: grid; gap: 16px; justify-items: center; }
+.all img { width: min(100%, 1100px); background: #fff; }
+:fullscreen header, :fullscreen .strip { display: none; }
+:fullscreen main { padding: 0; }
+@media (max-width: 640px) { header .m, .hide-sm { display: none; } .strip img { width: 80px; } main { padding: 8px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="t"><h1><a href="../" title="All talks">Demystifying Agentic AI</a></h1><div class="m">2026-09-24</div></div>
+  <nav>
+    <span class="count" id="count" aria-live="polite"></span>
+    
+    <a class="btn" href="demystifying-agentic-ai.pdf" download>PDF</a>
+    <button class="btn hide-sm" id="fs" title="Full screen (f)">Full screen</button>
+  </nav>
+</header>
+<main id="stage">
+  <img id="slide" src="slides/01.webp" alt="Demystifying the Agentic Stack Terms to know Build it, break it, buy it ON HARNESS ENGINEERING, ARCHITECTURAL RISK, BASIC AGENT COMPONENTS James King · September 2026 linkedin.com/in/hyggehacker · github.com/HyggeHacker Agent: An actor or a capability on a model loop; a microservice that solves a..." width="1920" height="1080">
+  <div class="zone prev" id="prev" aria-hidden="true"></div>
+  <div class="zone next" id="next" aria-hidden="true"></div>
+  <noscript><style>#slide, .zone, .strip, #fs { display: none; } main { display: block; overflow-y: auto; }</style><div class="all"><img src="slides/01.webp" alt="Demystifying the Agentic Stack Terms to know Build it, break it, buy it ON HARNESS ENGINEERING, ARCHITECTURAL RISK, BASIC AGENT COMPONENTS James King · September 2026 linkedin.com/in/hyggehacker · github.com/HyggeHacker Agent: An actor or a capability on a model loop; a microservice that solves a..." loading="lazy">
+<img src="slides/02.webp" alt="the loop, in code ① ① A turn budget is the only thing that stops a runaway. ② ② The model proposes stopping. The harness decides. for call in reply.tool_calls: if not allowed(call): ③ context.append(refusal(call)) continue context.append(run(call)) ④ ③ The gate. Code, not prose. Injection cannot ..." loading="lazy">
+<img src="slides/03.webp" alt="Risk via the lethal trifecta ❶ Sensitive data the agent can read. ❷ Untrusted content the agent can ingest. ❸ An outbound tool that can exfiltrate. All three in one session = end-to-end exploitable. Defense: break one leg per session usually the exfil leg. Willison (Jun 2025); Meta's Rule of Two ..." loading="lazy">
+<img src="slides/04.webp" alt="the harness &amp; its components Everything between you and the model. Where the security work lives. James King · September 2026" loading="lazy">
+<img src="slides/05.webp" alt="James King · September 2026" loading="lazy">
+<img src="slides/06.webp" alt="Subagents One markdown file. Only name and description are required. --name: code-reviewer description: ... model: sonnet effort: high tools: Read, Grep disallowedTools: Write mcpServers: [github] permissionMode: plan maxTurns: 20 skills: [review] memory: project hooks: ... isolation: worktree ba..." loading="lazy">
+<img src="slides/07.webp" alt="Skills Methodology bundles. Procedural knowledge. Progressive disclosure: frontmatter → body → deep load. Loaded on demand when the description matches. A skill can run shell at load and register its own hooks. James King · September 2026 Ps. https://owasp.org/projects/agentic-skillstop-10" loading="lazy">
+<img src="slides/08.webp" alt="Skills: pick, load, run Where they live: a folder with a SKILL.md. How they work: only the description sits in context. What they do: the model picks the skill, and it runs its own script. James King · September 2026" loading="lazy">
+<img src="slides/09.webp" alt="James King · September 2026" loading="lazy">
+<img src="slides/10.webp" alt="Hooks Lifecycle callbacks the harness fires. Four outputs: observe, block, rewrite, inject. Fails open. A hook can now be a model call. Not a security boundary, a layer. Fails open. James King · September 2026" loading="lazy">
+<img src="slides/11.webp" alt="Hooks: the gate The model tries the scan. A PreToolUse hook denies it before it runs. The model is not the control. The gate is. Things hooks can do: James King · September 2026 • Decision (allow / deny, can block the next step) • Observability (log / audit / count, doesn't block, records) • Inte..." loading="lazy">
+<img src="slides/12.webp" alt="James King · September 2026" loading="lazy">
+<img src="slides/13.webp" alt="MCP model context poisoner One wire format. Many external services. Three primitives: tools, resources, prompts. Each server is a separate process; a discrete trust decision. James King · September 2026 Ps. https://arxiv.org/abs/2606.27567 On the Inseparability of Instructions and Data in Shared-..." loading="lazy">
+<img src="slides/14.webp" alt="MCP: Allow Lists • An MCP server locks down its shell tool to a single allowed binary: git. Nothing else can run, seems safe. • Except that binary itself has a built-in escape hatch. Nobody is checked whether the allowlist covers arguments, not just executables… • ALLOW_COMMANDS allowlist as its ..." loading="lazy">
+<img src="slides/15.webp" alt="MCP: Catfishing Allow Lists Can’t use Curl? Use it as an argument for Git. Ah, I’ll block the specific dangerous arguments instead of the whole binary! The denylist trap Did you, though? a denylist of &quot;known dangerous&quot; arguments for a binary as feature-rich as git… James King · September 2026" loading="lazy">
+<img src="slides/16.webp" alt="Some helpful audit/build tooling for MCP • https://github.com/apisec-inc/mcp-audit • https://github.com/modelcontextprotocol/inspector • https://github.com/snyk/agent-scan James King · September 2026" loading="lazy">
+<img src="slides/17.webp" alt="James King · September 2026" loading="lazy">
+<img src="slides/18.webp" alt="Memory poisoning the well Anything the agent wrote down and reads back later as if it were true. Many things write to it. A poisoned prompt is a bad turn. A poisoned memory is every turn after it. Control: gate the write path. James King · September 2026" loading="lazy">
+<img src="slides/19.webp" alt="James King · September 2026" loading="lazy">
+<img src="slides/20.webp" alt="James King · September 2026" loading="lazy">
+<img src="slides/21.webp" alt="Memory • If agents are the new SaaS, memory is the new database. • Anything the agent wrote down and reads back later as if it were true. It re-enters the context as trusted instruction, unmarked. • A poisoned prompt is a bad turn. A poisoned memory is every turn after it, until a human reads the..." loading="lazy">
+<img src="slides/22.webp" alt="James King · September 2026" loading="lazy">
+<img src="slides/23.webp" alt="Plugins Versioned packaging unit. Bundles: Skills, Subagents, Hooks, MCP, Commands, settings.json. One install → all contents. One trust decision covers everything. James King · September 2026" loading="lazy">
+<img src="slides/24.webp" alt="Plugins A delivery mechanism for the components One install, three payloads: instructions, a process on your machine, a server with tools. Skill, hook, and server ship in one click. James King · September 2026" loading="lazy">
+<img src="slides/25.webp" alt="James King · September 2026" loading="lazy">
+<img src="slides/26.webp" alt="Sandboxing Where does it run? Container, microVM, userspace kernel. What may it touch? Files, network, commands, enforced by the kernel on the process itself. Irrevocable from inside. They stack. Most laptops answer neither question. Monday: nono run --allow . -- claude James King · September 2026" loading="lazy">
+<img src="slides/27.webp" alt="James King · September 2026" loading="lazy">
+<img src="slides/28.webp" alt="Building with AI The skill of the future: Identifying Software-shaped problems AUTOMATE same job, same output The Friday Export drop the raw export on a page, get the finished file back in the old format. The Invoice Pile a watched folder reads invoices, flags doubtful values, fills the same spre..." loading="lazy">
+<img src="slides/29.webp" alt="Architecture Decision Records • You can’t review 40,000 lines. You can review the decision behind them. • One markdown file per decision, committed next to the code it governs. • Hand your agent the ADRs before the codebase. They carry the why. • Add an enforced-by field: a hook, test or deny rul..." loading="lazy">
+<img src="slides/30.webp" alt="Threat Modeling • Push it into the pipeline. It is really hard to hand-model at agent-build velocity. • The dangerous part is the composition. And composability is what everyone is chasing. The threats lives in the seams, and in the combination of capabilities. • Threat-model every use case that ..." loading="lazy">
+<img src="slides/31.webp" alt="The Agent Trace • Every agent is a sleeper agent. Prevention blocks what looks wrong. A sleeper does what looks allowed. • A trace answers one question for every action: why did this happen, on whose behalf, and what influenced it? • Intent · identity · provenance · proposal · decision · effect. ..." loading="lazy">
+<img src="slides/32.webp" alt="Outro • Go forth and break a leg (preferably the exfil one). • Agent traces. Need those. All agents are sleeper agents. • If you get one control right, get observation right. • Threat modeling for your AI use cases. James King · September 2026" loading="lazy"></div></noscript>
+</main>
+<div class="strip" id="strip" role="tablist" aria-label="Slides"></div>
+<script>
+const slides = [{"n":1,"alt":"Demystifying the Agentic Stack Terms to know Build it, break it, buy it ON HARNESS ENGINEERING, ARCHITECTURAL RISK, BASIC AGENT COMPONENTS James King · September 2026 linkedin.com/in/hyggehacker · github.com/HyggeHacker Agent: An actor or a capability on a model loop; a microservice that solves a..."},{"n":2,"alt":"the loop, in code ① ① A turn budget is the only thing that stops a runaway. ② ② The model proposes stopping. The harness decides. for call in reply.tool_calls: if not allowed(call): ③ context.append(refusal(call)) continue context.append(run(call)) ④ ③ The gate. Code, not prose. Injection cannot ..."},{"n":3,"alt":"Risk via the lethal trifecta ❶ Sensitive data the agent can read. ❷ Untrusted content the agent can ingest. ❸ An outbound tool that can exfiltrate. All three in one session = end-to-end exploitable. Defense: break one leg per session usually the exfil leg. Willison (Jun 2025); Meta's Rule of Two ..."},{"n":4,"alt":"the harness & its components Everything between you and the model. Where the security work lives. James King · September 2026"},{"n":5,"alt":"James King · September 2026"},{"n":6,"alt":"Subagents One markdown file. Only name and description are required. --name: code-reviewer description: ... model: sonnet effort: high tools: Read, Grep disallowedTools: Write mcpServers: [github] permissionMode: plan maxTurns: 20 skills: [review] memory: project hooks: ... isolation: worktree ba..."},{"n":7,"alt":"Skills Methodology bundles. Procedural knowledge. Progressive disclosure: frontmatter → body → deep load. Loaded on demand when the description matches. A skill can run shell at load and register its own hooks. James King · September 2026 Ps. https://owasp.org/projects/agentic-skillstop-10"},{"n":8,"alt":"Skills: pick, load, run Where they live: a folder with a SKILL.md. How they work: only the description sits in context. What they do: the model picks the skill, and it runs its own script. James King · September 2026"},{"n":9,"alt":"James King · September 2026"},{"n":10,"alt":"Hooks Lifecycle callbacks the harness fires. Four outputs: observe, block, rewrite, inject. Fails open. A hook can now be a model call. Not a security boundary, a layer. Fails open. James King · September 2026"},{"n":11,"alt":"Hooks: the gate The model tries the scan. A PreToolUse hook denies it before it runs. The model is not the control. The gate is. Things hooks can do: James King · September 2026 • Decision (allow / deny, can block the next step) • Observability (log / audit / count, doesn't block, records) • Inte..."},{"n":12,"alt":"James King · September 2026"},{"n":13,"alt":"MCP model context poisoner One wire format. Many external services. Three primitives: tools, resources, prompts. Each server is a separate process; a discrete trust decision. James King · September 2026 Ps. https://arxiv.org/abs/2606.27567 On the Inseparability of Instructions and Data in Shared-..."},{"n":14,"alt":"MCP: Allow Lists • An MCP server locks down its shell tool to a single allowed binary: git. Nothing else can run, seems safe. • Except that binary itself has a built-in escape hatch. Nobody is checked whether the allowlist covers arguments, not just executables… • ALLOW_COMMANDS allowlist as its ..."},{"n":15,"alt":"MCP: Catfishing Allow Lists Can’t use Curl? Use it as an argument for Git. Ah, I’ll block the specific dangerous arguments instead of the whole binary! The denylist trap Did you, though? a denylist of \"known dangerous\" arguments for a binary as feature-rich as git… James King · September 2026"},{"n":16,"alt":"Some helpful audit/build tooling for MCP • https://github.com/apisec-inc/mcp-audit • https://github.com/modelcontextprotocol/inspector • https://github.com/snyk/agent-scan James King · September 2026"},{"n":17,"alt":"James King · September 2026"},{"n":18,"alt":"Memory poisoning the well Anything the agent wrote down and reads back later as if it were true. Many things write to it. A poisoned prompt is a bad turn. A poisoned memory is every turn after it. Control: gate the write path. James King · September 2026"},{"n":19,"alt":"James King · September 2026"},{"n":20,"alt":"James King · September 2026"},{"n":21,"alt":"Memory • If agents are the new SaaS, memory is the new database. • Anything the agent wrote down and reads back later as if it were true. It re-enters the context as trusted instruction, unmarked. • A poisoned prompt is a bad turn. A poisoned memory is every turn after it, until a human reads the..."},{"n":22,"alt":"James King · September 2026"},{"n":23,"alt":"Plugins Versioned packaging unit. Bundles: Skills, Subagents, Hooks, MCP, Commands, settings.json. One install → all contents. One trust decision covers everything. James King · September 2026"},{"n":24,"alt":"Plugins A delivery mechanism for the components One install, three payloads: instructions, a process on your machine, a server with tools. Skill, hook, and server ship in one click. James King · September 2026"},{"n":25,"alt":"James King · September 2026"},{"n":26,"alt":"Sandboxing Where does it run? Container, microVM, userspace kernel. What may it touch? Files, network, commands, enforced by the kernel on the process itself. Irrevocable from inside. They stack. Most laptops answer neither question. Monday: nono run --allow . -- claude James King · September 2026"},{"n":27,"alt":"James King · September 2026"},{"n":28,"alt":"Building with AI The skill of the future: Identifying Software-shaped problems AUTOMATE same job, same output The Friday Export drop the raw export on a page, get the finished file back in the old format. The Invoice Pile a watched folder reads invoices, flags doubtful values, fills the same spre..."},{"n":29,"alt":"Architecture Decision Records • You can’t review 40,000 lines. You can review the decision behind them. • One markdown file per decision, committed next to the code it governs. • Hand your agent the ADRs before the codebase. They carry the why. • Add an enforced-by field: a hook, test or deny rul..."},{"n":30,"alt":"Threat Modeling • Push it into the pipeline. It is really hard to hand-model at agent-build velocity. • The dangerous part is the composition. And composability is what everyone is chasing. The threats lives in the seams, and in the combination of capabilities. • Threat-model every use case that ..."},{"n":31,"alt":"The Agent Trace • Every agent is a sleeper agent. Prevention blocks what looks wrong. A sleeper does what looks allowed. • A trace answers one question for every action: why did this happen, on whose behalf, and what influenced it? • Intent · identity · provenance · proposal · decision · effect. ..."},{"n":32,"alt":"Outro • Go forth and break a leg (preferably the exfil one). • Agent traces. Need those. All agents are sleeper agents. • If you get one control right, get observation right. • Threat modeling for your AI use cases. James King · September 2026"}];
+const pad = (n) => String(n).padStart(2, "0");
+const img = document.getElementById("slide"), strip = document.getElementById("strip"), count = document.getElementById("count");
+const cache = new Map();
+const warm = (n) => { if (n >= 1 && n <= slides.length && !cache.has(n)) { const i = new Image(); i.src = "slides/" + pad(n) + ".webp"; cache.set(n, i); } };
+const thumbs = slides.map((s) => {
+  const b = document.createElement("button");
+  b.setAttribute("role", "tab"); b.title = "Slide " + s.n;
+  b.innerHTML = '<img loading="lazy" src="slides/thumb/' + pad(s.n) + '.webp" alt="">';
+  b.onclick = () => go(s.n);
+  strip.appendChild(b); return b;
+});
+let cur = 0;
+function go(n, push = true) {
+  n = Math.max(1, Math.min(slides.length, n));
+  if (n === cur) return;
+  if (cur) thumbs[cur - 1].removeAttribute("aria-current");
+  cur = n;
+  img.src = "slides/" + pad(n) + ".webp";
+  img.alt = slides[n - 1].alt || "Slide " + n;
+  thumbs[n - 1].setAttribute("aria-current", "true");
+  thumbs[n - 1].scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+  count.textContent = n + " / " + slides.length;
+  if (push) history.replaceState(null, "", "#" + n);
+  warm(n + 1); warm(n + 2); warm(n - 1);
+}
+document.getElementById("prev").onclick = () => go(cur - 1);
+document.getElementById("next").onclick = () => go(cur + 1);
+document.addEventListener("keydown", (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key;
+  if (k === "ArrowRight" || k === "PageDown" || k === " " || k === "j") go(cur + 1);
+  else if (k === "ArrowLeft" || k === "PageUp" || k === "k") go(cur - 1);
+  else if (k === "Home") go(1);
+  else if (k === "End") go(slides.length);
+  else if (k === "f") toggleFs();
+  else return;
+  e.preventDefault();
+});
+let x0 = null;
+const stage = document.getElementById("stage");
+stage.addEventListener("pointerdown", (e) => { x0 = e.clientX; });
+stage.addEventListener("pointerup", (e) => { if (x0 !== null && Math.abs(e.clientX - x0) > 40) go(cur + (e.clientX < x0 ? 1 : -1)); x0 = null; });
+function toggleFs() { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.(); }
+document.getElementById("fs").onclick = toggleFs;
+window.addEventListener("hashchange", () => go(parseInt(location.hash.slice(1)) || 1, false));
+go(parseInt(location.hash.slice(1)) || 1, false);
+</script>
+</body>
+</html>
